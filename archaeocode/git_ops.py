@@ -109,6 +109,39 @@ def get_file_history(repo: Repo, file_path: str, limit: int = 15) -> list[dict]:
     return results
 
 
+def get_churn(
+    repo: Repo,
+    limit: int = 20,
+    on_progress: "callable | None" = None,
+) -> list[dict]:
+    """Count how many commits touched each file across all history."""
+    try:
+        total_commits = int(repo.git.rev_list("--count", "HEAD"))
+    except Exception:
+        total_commits = 0
+
+    churn: dict[str, dict] = {}
+    for commit in repo.iter_commits():
+        if on_progress:
+            on_progress(total_commits)
+        for file_path, stats in commit.stats.files.items():
+            if file_path not in churn:
+                churn[file_path] = {"count": 0, "authors": set()}
+            churn[file_path]["count"] += 1
+            churn[file_path]["authors"].add(commit.author.name)
+
+    results = [
+        {
+            "path": path,
+            "commits": data["count"],
+            "authors": len(data["authors"]),
+        }
+        for path, data in churn.items()
+    ]
+    results.sort(key=lambda x: x["commits"], reverse=True)
+    return results[:limit]
+
+
 def get_line_ages(repo: Repo, file_path: str) -> list[dict]:
     now = datetime.now(timezone.utc)
     try:

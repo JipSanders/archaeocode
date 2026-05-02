@@ -264,6 +264,59 @@ def _display_carbon_summary(lines: list[dict]) -> None:
     console.print()
 
 
+def _churn_color(commits: int, max_commits: int) -> str:
+    ratio = commits / max_commits if max_commits else 0
+    if ratio < 0.15:
+        return "bright_green"
+    if ratio < 0.30:
+        return "green"
+    if ratio < 0.50:
+        return "yellow"
+    if ratio < 0.70:
+        return "orange3"
+    if ratio < 0.85:
+        return "red"
+    return "bright_red"
+
+
+def display_churn(files: list[dict]) -> None:
+    if not files:
+        console.print("[yellow]No churn data found.[/yellow]")
+        return
+
+    max_commits = files[0]["commits"] if files else 1
+    BAR = 24
+
+    table = Table(
+        box=box.SIMPLE_HEAD,
+        header_style="bold dim",
+        expand=True,
+        show_edge=False,
+        padding=(0, 1),
+    )
+    table.add_column("Commits", justify="right", width=8, no_wrap=True)
+    table.add_column("", width=BAR, no_wrap=True)
+    table.add_column("File", style="cyan", no_wrap=True, ratio=1)
+    table.add_column("Authors", justify="right", width=8, no_wrap=True)
+
+    for f in files:
+        commits = f["commits"]
+        color = _churn_color(commits, max_commits)
+        filled = round(commits / max_commits * BAR)
+        bar = Text()
+        bar.append("█" * filled, style=color)
+        bar.append("░" * (BAR - filled), style="dim")
+        table.add_row(
+            Text(str(commits), style=f"bold {color}"),
+            bar,
+            escape(f["path"]),
+            Text(str(f["authors"]), style="dim"),
+        )
+
+    console.print(table)
+    console.print()
+
+
 def display_survey(repo_path: str, files: list[dict]) -> None:
     if not files:
         console.print("[yellow]No tracked files found.[/yellow]")

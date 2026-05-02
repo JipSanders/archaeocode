@@ -7,6 +7,7 @@ from .display import (
     console,
     display_ancient_files,
     display_carbon_date,
+    display_churn,
     display_file_history,
     display_header,
     display_survey,
@@ -16,6 +17,7 @@ from .git_ops import (
     find_repo,
     get_all_file_ages,
     get_ancient_files,
+    get_churn,
     get_file_history,
     get_line_ages,
     get_repo_info,
@@ -88,6 +90,28 @@ def carbon_date(file_path: str, path: str) -> None:
     with console.status("[dim]Calculating ages...[/dim]"):
         lines = get_line_ages(repo, resolved)
     display_carbon_date(resolved, lines)
+
+
+@cli.command()
+@click.option("--path", "-p", default=".", show_default=True, help="Repository path.")
+@click.option("--limit", "-n", default=20, show_default=True, help="Number of files to show.")
+def churn(path: str, limit: int) -> None:
+    """Find the most frequently changed files in the repository.
+
+    High-churn files change constantly — they're hotspots, contested terrain,
+    or code that never quite got right. Low-churn files are stable bedrock.
+    """
+    repo = find_repo(path)
+    display_header("CHURN", get_repo_info(repo))
+    try:
+        total_commits = int(repo.git.rev_list("--count", "HEAD"))
+    except Exception:
+        total_commits = 0
+    progress = make_progress("Reading commit history…", total=total_commits)
+    task_id = progress.task_ids[0]
+    with progress:
+        files = get_churn(repo, limit=limit, on_progress=lambda _: progress.advance(task_id))
+    display_churn(files)
 
 
 @cli.command()
