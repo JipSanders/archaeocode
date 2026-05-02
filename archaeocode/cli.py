@@ -8,6 +8,7 @@ from .display import (
     display_ancient_files,
     display_carbon_date,
     display_file_history,
+    display_header,
     display_survey,
     make_progress,
 )
@@ -17,6 +18,7 @@ from .git_ops import (
     get_ancient_files,
     get_file_history,
     get_line_ages,
+    get_repo_info,
     get_tree_files,
     resolve_file_path,
 )
@@ -40,6 +42,7 @@ def dig(path: str, limit: int, min_age: int | None) -> None:
     buried history.
     """
     repo = find_repo(path)
+    display_header("DIG", get_repo_info(repo))
     total = len(get_tree_files(repo))
     progress = make_progress("Digging through the layers…", total=total)
     task_id = progress.task_ids[0]
@@ -64,6 +67,7 @@ def excavate(file_path: str, path: str, limit: int) -> None:
     and temporal context, from most recent to oldest.
     """
     repo = find_repo(path)
+    display_header("EXCAVATE", get_repo_info(repo))
     resolved = resolve_file_path(repo, file_path)
     history = get_file_history(repo, resolved, limit=limit)
     display_file_history(resolved, history)
@@ -79,6 +83,7 @@ def carbon_date(file_path: str, path: str) -> None:
     that modified it. Lines are color-coded: green (recent) → red (ancient).
     """
     repo = find_repo(path)
+    display_header("CARBON DATE", get_repo_info(repo))
     resolved = resolve_file_path(repo, file_path)
     with console.status("[dim]Calculating ages...[/dim]"):
         lines = get_line_ages(repo, resolved)
@@ -94,6 +99,7 @@ def survey(path: str) -> None:
     giving a high-level overview of the repository's age profile.
     """
     repo = find_repo(path)
+    display_header("SURVEY", get_repo_info(repo))
     total = len(get_tree_files(repo))
     progress = make_progress("Surveying the dig site…", total=total)
     task_id = progress.task_ids[0]

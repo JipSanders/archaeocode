@@ -7,6 +7,23 @@ import click
 from git import GitCommandError, InvalidGitRepositoryError, Repo
 
 
+def get_repo_info(repo: Repo) -> dict:
+    try:
+        branch = repo.active_branch.name
+    except TypeError:
+        branch = "detached HEAD"
+    try:
+        head = repo.head.commit.hexsha[:8]
+    except Exception:
+        head = "unknown"
+    return {
+        "path": repo.working_dir,
+        "name": Path(repo.working_dir).name,
+        "branch": branch,
+        "head": head,
+    }
+
+
 def find_repo(path: str) -> Repo:
     try:
         return Repo(path, search_parent_directories=True)
