@@ -24,7 +24,29 @@ def get_repo_info(repo: Repo) -> dict:
     }
 
 
+def _is_url(path: str) -> bool:
+    return path.startswith(("https://", "http://", "git@", "git://"))
+
+
+def _clone_url(url: str) -> Repo:
+    import tempfile
+    repo_name = url.rstrip("/").split("/")[-1].removesuffix(".git")
+    clone_path = Path(tempfile.gettempdir()) / f"archaeocode-{repo_name}"
+
+    if clone_path.exists():
+        click.echo(f"Using cached clone at {clone_path}", err=True)
+        return Repo(clone_path)
+
+    click.echo(f"Cloning {url} ...", err=True)
+    try:
+        return Repo.clone_from(url, clone_path)
+    except Exception as e:
+        raise click.ClickException(f"Failed to clone '{url}': {e}")
+
+
 def find_repo(path: str) -> Repo:
+    if _is_url(path):
+        return _clone_url(path)
     try:
         return Repo(path, search_parent_directories=True)
     except InvalidGitRepositoryError:

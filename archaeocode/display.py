@@ -51,7 +51,7 @@ def _age_color(age_days: int) -> str:
     return "bright_red"
 
 
-def _age_label(age_days: int) -> str:
+def _age_label(age_days: int, suffix: bool = False) -> str:
     if age_days < 1:
         return "today"
     if age_days < 7:
@@ -351,15 +351,19 @@ def display_survey(repo_path: str, files: list[dict]) -> None:
         )
 
     console.print()
+    def _fmt_age(age_days: int) -> str:
+        label = _age_label(age_days)
+        return label if label == "today" else f"{label} ago"
+
     console.print(
         f"  [dim]Oldest:[/dim]  [{_age_color(oldest['age_days'])}]{escape(oldest['path'])}[/]"
-        f"  [dim]({_age_label(oldest['age_days'])} ago)[/dim]"
+        f"  [dim]({_fmt_age(oldest['age_days'])})[/dim]"
     )
     console.print(
         f"  [dim]Newest:[/dim]  [{_age_color(newest['age_days'])}]{escape(newest['path'])}[/]"
-        f"  [dim]({_age_label(newest['age_days'])} ago)[/dim]"
+        f"  [dim]({_fmt_age(newest['age_days'])})[/dim]"
     )
     console.print(
-        f"  [dim]Median:[/dim]  [{_age_color(median_age)}]{_age_label(median_age)} ago[/]"
+        f"  [dim]Median:[/dim]  [{_age_color(median_age)}]{_fmt_age(median_age)}[/]"
     )
     console.print()
